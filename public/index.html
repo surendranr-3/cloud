@@ -1,4 +1,40 @@
 <!DOCTYPE html>
+<!--
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    FINANCEFLOW - FRONTEND APPLICATION                    ║
+║                       Expense Tracker UI & Logic                          ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+DESCRIPTION:
+FinanceFlow is a responsive single-page application for tracking income and
+expenses. It communicates with a backend API to persist transaction data.
+
+TECHNOLOGIES:
+- HTML5: Semantic markup and structure
+- CSS3: Responsive design with Flexbox layout
+- JavaScript (ES6+): Client-side logic and API communication
+- Fetch API: Modern HTTP requests (no jQuery required)
+
+RESPONSIVE DESIGN:
+- Mobile-first approach
+- Optimized for screens 320px to 1920px
+- Touch-friendly interface for mobile devices
+- Flexible layouts using CSS Flexbox
+- Proper viewport meta tag for mobile scaling
+
+COLOR SCHEME:
+- Primary: Dark slate (#1e293b)
+- Accent: Bright yellow (#facc15)
+- Income: Emerald green (#10b981)
+- Expense: Bright red (#ef4444)
+- Background: Light gray (#f8fafc)
+
+API ENDPOINTS:
+- GET /api/transactions - Fetch all transactions
+- POST /api/transactions - Create transaction
+- DELETE /api/transactions/:id - Delete transaction
+- DELETE /api/transactions - Reset all data
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,145 +42,314 @@
   <title>FinanceFlow | Expense Tracker</title>
 
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, 'Segoe UI', sans-serif; }
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* GLOBAL & RESET STYLES                                                 */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* Remove default margins/padding from all elements */
+    /* Apply consistent font and box-sizing model */
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      font-family: system-ui, 'Segoe UI', sans-serif; 
+    }
 
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* BODY & LAYOUT                                                          */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* Gradient background with full viewport height */
+    /* Flexbox layout centers app container on screen */
     body {
       background: linear-gradient(145deg, #e9f0fc, #d9e4f5);
       min-height: 100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding:20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px; /* Space on mobile */
     }
 
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* MAIN APP CONTAINER                                                     */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* White card with shadow and rounded corners */
+    /* Max-width ensures readability on large screens */
     .app {
-      width:100%;
-      max-width:700px;
-      background:white;
-      border-radius:20px;
-      box-shadow:0 20px 40px rgba(0,0,0,0.2);
-      overflow:hidden;
+      width: 100%;
+      max-width: 700px; /* Optimal width for content */
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      overflow: hidden; /* Hide overflow from rounded corners */
     }
 
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* HEADER SECTION                                                         */
+    /* ═══════════════════════════════════════════════════════════════════════ */
     .header {
-      background:#1e293b;
-      color:white;
-      padding:20px;
-      text-align:center;
+      background: #1e293b; /* Dark slate */
+      color: white;
+      padding: 20px; /* Mobile-friendly padding */
+      text-align: center;
     }
 
+    /* Yellow highlight on "Tracker" text */
     .header h1 span {
-      background:#facc15;
-      color:black;
-      padding:5px 10px;
-      border-radius:20px;
+      background: #facc15; /* Bright yellow */
+      color: black;
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: inline-block; /* Prevent line breaks */
     }
 
-    .content { padding:20px; }
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* MAIN CONTENT AREA                                                      */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    .content { 
+      padding: 20px; /* Consistent padding on all screen sizes */
+    }
 
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* BALANCE DISPLAY SECTION                                                */
+    /* ═══════════════════════════════════════════════════════════════════════ */
     .balance {
-      background:#1e293b;
-      color:white;
-      padding:20px;
-      border-radius:15px;
-      text-align:center;
-      margin-bottom:20px;
+      background: #1e293b; /* Dark background */
+      color: white;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      margin-bottom: 20px;
     }
 
+    /* Large balance amount in bright yellow */
     .balance h2 {
-      color:#facc15;
-      font-size:2.5rem;
+      color: #facc15; /* Bright yellow */
+      font-size: 2.5rem; /* Large on desktop, scales down on mobile */
+      word-wrap: break-word; /* Handle long numbers */
     }
 
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* INCOME/EXPENSE STATISTICS                                              */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* Flexbox row layout - stacks on mobile */
     .stats {
-      display:flex;
-      gap:10px;
-      margin-bottom:20px;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
+    /* Individual stat card */
     .card {
-      flex:1;
-      padding:15px;
-      border-radius:10px;
-      text-align:center;
-      background:#f8fafc;
+      flex: 1; /* Equal width */
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      background: #f8fafc; /* Very light gray */
+      min-width: 0; /* Allows text to wrap if needed */
     }
 
-    .income { color:#10b981; font-weight:bold; }
-    .expense { color:#ef4444; font-weight:bold; }
+    /* Income text: Green for positive amounts */
+    .income { 
+      color: #10b981; /* Emerald green */
+      font-weight: bold; 
+    }
 
+    /* Expense text: Red for negative amounts */
+    .expense { 
+      color: #ef4444; /* Bright red */
+      font-weight: bold; 
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* FORM SECTION - INPUT FIELDS                                            */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* Input fields: Full width on mobile, responsive on larger screens */
     .form input {
-      width:100%;
-      padding:10px;
-      margin-bottom:10px;
-      border-radius:10px;
-      border:1px solid #ccc;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px; /* Prevents zoom on iOS when focused */
     }
 
+    /* Form buttons: Full width, touch-friendly size */
     .form button {
-      width:100%;
-      padding:10px;
-      border:none;
-      border-radius:10px;
-      background:#1e293b;
-      color:white;
-      font-weight:bold;
-      cursor:pointer;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #1e293b; /* Dark slate */
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 10px; /* Space between buttons */
+      font-size: 16px; /* Readable on mobile */
+      transition: background-color 0.2s; /* Smooth hover effect */
     }
 
+    /* Button hover effect for desktop users */
+    .form button:hover {
+      background: #0f172a; /* Darker shade */
+    }
+
+    /* Reset button: Distinct styling for destructive action */
     .reset {
-      margin-top:10px;
-      background:#eee;
-      color:black;
+      margin-top: 0; /* Remove extra margin */
+      background: #eee; /* Light gray */
+      color: black;
     }
 
+    .reset:hover {
+      background: #ddd; /* Darker gray */
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* TRANSACTION LIST SECTION                                               */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* Scrollable list container for mobile */
     ul {
-      list-style:none;
-      margin-top:15px;
-      max-height:300px;
-      overflow:auto;
+      list-style: none;
+      margin-top: 15px;
+      max-height: 300px; /* Limit height */
+      overflow-y: auto; /* Vertical scroll only */
+      border: 1px solid #e5e7eb; /* Subtle border */
+      border-radius: 10px;
+      padding: 5px; /* Inner spacing */
     }
 
+    /* Individual transaction item */
     li {
-      background:#f8fafc;
-      padding:10px;
-      border-radius:10px;
-      margin-bottom:10px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+      background: #f8fafc; /* Light background */
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between; /* Spread items horizontally */
+      align-items: center; /* Vertical alignment */
+      gap: 10px; /* Space between elements */
+      font-size: 14px; /* Mobile-friendly size */
+      word-break: break-word; /* Handle long descriptions */
     }
 
+    /* Transaction amount */
+    li span {
+      font-weight: bold;
+      min-width: 80px; /* Fixed width for alignment */
+      text-align: right;
+    }
+
+    /* Delete button: Icon button on each transaction */
     .delete {
-      cursor:pointer;
-      color:red;
-      border:none;
-      background:none;
+      cursor: pointer;
+      color: red;
+      border: none;
+      background: none;
+      font-size: 1.2rem;
+      padding: 5px; /* Larger touch target */
+      border-radius: 5px;
+      transition: background-color 0.2s;
     }
 
+    .delete:hover {
+      background: #fee; /* Light red background on hover */
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* ERROR MESSAGE DISPLAY                                                  */
+    /* ═══════════════════════════════════════════════════════════════════════ */
     .error {
-      color:red;
-      text-align:center;
-      margin-top:10px;
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+      min-height: 1.5em; /* Reserve space to prevent layout shift */
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* MOBILE RESPONSIVENESS - Large Phones & Tablets                         */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px; /* Reduce padding on very small screens */
+      }
+
+      .app {
+        border-radius: 15px; /* Slightly smaller radius */
+      }
+
+      .header {
+        padding: 15px; /* Reduce padding */
+      }
+
+      .header h1 {
+        font-size: 1.5rem; /* Smaller title on mobile */
+      }
+
+      .balance h2 {
+        font-size: 2rem; /* Smaller balance on mobile */
+      }
+
+      .content {
+        padding: 15px; /* Reduce padding */
+      }
+
+      li {
+        font-size: 13px; /* Smaller text */
+        flex-wrap: wrap; /* Allow wrapping if needed */
+      }
+
+      li span {
+        min-width: 70px;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* MOBILE RESPONSIVENESS - Very Small Phones                              */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    @media (max-width: 360px) {
+      .header h1 {
+        font-size: 1.2rem;
+      }
+
+      .balance h2 {
+        font-size: 1.5rem;
+      }
+
+      .form input,
+      .form button {
+        padding: 8px;
+        font-size: 14px;
+      }
+
+      li {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
 
 <body>
 
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MAIN APPLICATION CONTAINER                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div class="app">
 
+  <!-- HEADER SECTION: Application Title -->
   <div class="header">
     <h1>💰 FinanceFlow <span>Tracker</span></h1>
   </div>
 
+  <!-- MAIN CONTENT AREA -->
   <div class="content">
 
+    <!-- BALANCE DISPLAY: Current balance (income - expenses) -->
     <div class="balance">
       <p>Your Balance</p>
       <h2 id="balance">$0</h2>
     </div>
 
+    <!-- STATISTICS: Income and Expense cards -->
     <div class="stats">
       <div class="card">
         <p>Income</p>
@@ -156,108 +361,180 @@
       </div>
     </div>
 
+    <!-- INPUT FORM: Add new transactions -->
     <div class="form">
-      <input id="text" placeholder="Description">
-      <input id="amount" type="number" placeholder="Amount">
+      <!-- Description input -->
+      <input id="text" type="text" placeholder="Description" autocomplete="off">
+      
+      <!-- Amount input -->
+      <input id="amount" type="number" placeholder="Amount" step="0.01">
 
+      <!-- Transaction type selector -->
       <label><input type="radio" name="type" value="income" checked> Income</label>
       <label><input type="radio" name="type" value="expense"> Expense</label>
 
+      <!-- Submit button -->
       <button onclick="addTransaction()">Add</button>
+      
+      <!-- Reset button with confirmation -->
       <button class="reset" onclick="resetAll()">Reset All</button>
 
+      <!-- Error message area (updated by JavaScript) -->
       <div class="error" id="error"></div>
     </div>
 
+    <!-- TRANSACTION LIST: All transactions (newest first) -->
     <ul id="list"></ul>
 
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT: Client-side application logic                              -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
 <script>
 
+/**
+ * ╔═══════════════════════════════════════════════════════════════════════╗
+ * ║                  FINANCEFLOW CLIENT-SIDE LOGIC                        ║
+ * ║              API Communication & UI Management                        ║
+ * ╚═══════════════════════════════════════════════════════════════════════╝
+ */
+
+// API endpoint for transaction operations
 const API = "/api/transactions";
+
+// In-memory transaction cache for instant UI updates
+// Synced with server data
 let data = [];
 
-function showError(msg){
+/**
+ * DISPLAY ERROR MESSAGE
+ * Shows temporary error message to user
+ * Auto-clears after 2 seconds
+ * 
+ * @param {string} msg - Error message to display
+ */
+function showError(msg) {
   document.getElementById("error").innerText = msg;
-  setTimeout(()=>document.getElementById("error").innerText="",2000);
+  setTimeout(() => document.getElementById("error").innerText = "", 2000);
 }
 
-async function load(){
-  try{
+/**
+ * LOAD TRANSACTIONS
+ * Fetches all transactions from server on page load
+ * Initializes UI with current data
+ * Handles network errors gracefully
+ */
+async function load() {
+  try {
     const res = await fetch(API);
     data = await res.json();
     updateUI();
-  }catch{
+  } catch {
     showError("Server error");
   }
 }
 
-function updateUI(){
-  let income=0, expense=0;
+/**
+ * UPDATE USER INTERFACE
+ * Recalculates balance and expense totals
+ * Re-renders transaction list
+ * Called whenever data changes
+ */
+function updateUI() {
+  // Calculate totals
+  let income = 0, expense = 0;
 
-  data.forEach(t=>{
-    if(t.amount>0) income+=t.amount;
-    else expense+=Math.abs(t.amount);
+  data.forEach(t => {
+    if (t.amount > 0) income += t.amount;
+    else expense += Math.abs(t.amount);
   });
 
-  document.getElementById("income").innerText = "$"+income.toFixed(2);
-  document.getElementById("expense").innerText = "$"+expense.toFixed(2);
-  document.getElementById("balance").innerText = "$"+(income-expense).toFixed(2);
+  // Update display elements
+  document.getElementById("income").innerText = "$" + income.toFixed(2);
+  document.getElementById("expense").innerText = "$" + expense.toFixed(2);
+  document.getElementById("balance").innerText = "$" + (income - expense).toFixed(2);
 
+  // Rebuild transaction list
   const list = document.getElementById("list");
-  list.innerHTML="";
+  list.innerHTML = "";
 
-  data.slice().reverse().forEach(t=>{
-    const li=document.createElement("li");
+  // Display transactions in reverse order (newest first)
+  data.slice().reverse().forEach(t => {
+    const li = document.createElement("li");
     li.innerHTML = `
       ${t.text} 
-      <span>${t.amount>0?"+":""}$${Math.abs(t.amount)}</span>
+      <span>${t.amount > 0 ? "+" : ""}$${Math.abs(t.amount).toFixed(2)}</span>
       <button class="delete" onclick="remove(${t.id})">❌</button>
     `;
     list.appendChild(li);
   });
 }
 
-async function addTransaction(){
+/**
+ * ADD NEW TRANSACTION
+ * Validates form input
+ * Sends POST request to create transaction
+ * Updates local cache and UI
+ */
+async function addTransaction() {
+  // Get form values
   const text = document.getElementById("text").value.trim();
   let amount = parseFloat(document.getElementById("amount").value);
 
-  if(!text) return showError("Enter description");
-  if(isNaN(amount) || amount<=0) return showError("Invalid amount");
+  // Validate inputs
+  if (!text) return showError("Enter description");
+  if (isNaN(amount) || amount <= 0) return showError("Invalid amount");
 
+  // Get transaction type
   const type = document.querySelector("input[name='type']:checked").value;
-  if(type==="expense") amount = -amount;
+  if (type === "expense") amount = -amount;
 
-  const res = await fetch(API,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json"},
-    body: JSON.stringify({text, amount})
+  // Send to server
+  const res = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, amount })
   });
 
+  // Add to local cache and update UI
   const newT = await res.json();
   data.push(newT);
   updateUI();
 
-  document.getElementById("text").value="";
-  document.getElementById("amount").value="";
+  // Clear form
+  document.getElementById("text").value = "";
+  document.getElementById("amount").value = "";
 }
 
-async function remove(id){
-  await fetch(API+"/"+id,{method:"DELETE"});
-  data = data.filter(t=>t.id!==id);
+/**
+ * DELETE TRANSACTION
+ * Removes specific transaction from server
+ * Updates local cache and UI
+ * 
+ * @param {number} id - Transaction ID to delete
+ */
+async function remove(id) {
+  await fetch(API + "/" + id, { method: "DELETE" });
+  data = data.filter(t => t.id !== id);
   updateUI();
 }
 
-async function resetAll(){
-  if(!confirm("Delete all transactions?")) return;
+/**
+ * RESET ALL DATA
+ * Deletes all transactions after user confirmation
+ * This action is irreversible
+ */
+async function resetAll() {
+  if (!confirm("Delete all transactions? This cannot be undone.")) return;
 
-  await fetch(API,{method:"DELETE"});
-  data=[];
+  await fetch(API, { method: "DELETE" });
+  data = [];
   updateUI();
 }
 
+// Initialize on page load
 load();
 
 </script>
